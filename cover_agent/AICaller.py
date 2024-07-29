@@ -3,11 +3,13 @@ import os
 import time
 
 import litellm
+import requests
 from wandb.sdk.data_types.trace_tree import Trace
+from openai import OpenAI
 
 
 class AICaller:
-    def __init__(self, model: str, api_base: str = ""):
+    def __init__(self, model: str, api_base: str = "", api_key: str = ""):
         """
         Initializes an instance of the AICaller class.
 
@@ -17,6 +19,7 @@ class AICaller:
         """
         self.model = model
         self.api_base = api_base
+        self.api_key = api_key
 
     def call_model(self, prompt: dict, max_tokens=4096):
         """
@@ -49,6 +52,16 @@ class AICaller:
             "stream": True,
             "temperature": 0.2,
         }
+
+        if self.model.startswith("vllm-"):
+            completion_params["stream"] = False
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+            model_response = requests.post(f"{self.api_base}/chat/completions", headers=headers, json=completion_params).json()
+            return (
+                model_response["choices"][0]["message"]["content"],
+                int(model_response["usage"]["prompt_tokens"]),
+                int(model_response["usage"]["completion_tokens"]),
+            )
 
         # API base exception for OpenAI Compatible, Ollama and Hugging Face models
         if (

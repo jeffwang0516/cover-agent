@@ -105,6 +105,7 @@ class CoverageProcessor:
                                                 and the coverage percentage as values.
         """
         tree = ET.parse(self.file_path)
+        self.logger.info(f"Parsing coverage data for {self.file_path}")
         root = tree.getroot()
 
         if filename:
