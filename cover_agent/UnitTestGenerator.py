@@ -24,6 +24,7 @@ class UnitTestGenerator:
         test_command: str,
         llm_model: str,
         api_base: str = "",
+        api_key: str = "",
         test_command_dir: str = os.getcwd(),
         included_files: list = None,
         coverage_type="cobertura",
@@ -40,6 +41,7 @@ class UnitTestGenerator:
             test_command (str): The command to run tests.
             llm_model (str): The language model to be used for test generation.
             api_base (str, optional): The base API url to use in case model is set to Ollama or Hugging Face. Defaults to an empty string.
+            api_key (str, optional): The API key to use for the language model. Defaults to an empty string.
             test_command_dir (str, optional): The directory where the test command should be executed. Defaults to the current working directory.
             included_files (list, optional): A list of paths to included files. Defaults to None.
             coverage_type (str, optional): The type of coverage report. Defaults to "cobertura".
@@ -62,7 +64,7 @@ class UnitTestGenerator:
         self.language = self.get_code_language(source_file_path)
 
         # Objects to instantiate
-        self.ai_caller = AICaller(model=llm_model, api_base=api_base)
+        self.ai_caller = AICaller(model=llm_model, api_base=api_base, api_key=api_key)
 
         # Get the logger instance from CustomLogger
         self.logger = CustomLogger.get_logger(__name__)
@@ -139,6 +141,7 @@ class UnitTestGenerator:
             src_file_path=self.source_file_path,
             coverage_type=self.coverage_type,
         )
+        self.logger.info(f"src_file_path: {self.source_file_path}, code_coverage_report_path: {self.code_coverage_report_path}")
 
         # Use the process_coverage_report method of CoverageProcessor, passing in the time the test command was executed
         try:
@@ -151,6 +154,7 @@ class UnitTestGenerator:
             # Process the extracted coverage metrics
             self.current_coverage = percentage_covered
             self.code_coverage_report = f"Lines covered: {lines_covered}\nLines missed: {lines_missed}\nPercentage covered: {round(percentage_covered * 100, 2)}%"
+            self.logger.info(f"Coverage report: {self.code_coverage_report}")
         except AssertionError as error:
             # Handle the case where the coverage report does not exist or was not updated after the test command
             self.logger.error(f"Error in coverage processing: {error}")

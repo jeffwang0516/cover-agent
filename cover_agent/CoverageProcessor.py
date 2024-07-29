@@ -99,6 +99,7 @@ class CoverageProcessor:
             Tuple[list, list, float]: A tuple containing lists of covered and missed line numbers, and the coverage percentage.
         """
         tree = ET.parse(self.file_path)
+        self.logger.info(f"Parsing coverage data for {self.file_path}")
         root = tree.getroot()
         lines_covered, lines_missed = [], []
         filename = os.path.basename(self.src_file_path)

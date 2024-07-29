@@ -81,6 +81,11 @@ def parse_args():
         help="The API url to use for Ollama or Hugging Face. Default: %(default)s.",
     )
     parser.add_argument(
+        "--api-key",
+        default="",
+        help="The API key to use for the language model. Default: %(default)s.",
+    )
+    parser.add_argument(
         "--strict-coverage",
         action="store_true",
         help="If set, Cover-Agent will return a non-zero exit code if the desired code coverage is not achieved. Default: False.",
