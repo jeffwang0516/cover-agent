@@ -1,11 +1,14 @@
 import datetime
+import json
 import os
 import time
 
 import litellm
+from litellm.utils import Delta
 import requests
 from wandb.sdk.data_types.trace_tree import Trace
 from openai import OpenAI
+import sseclient
 
 
 class AICaller:
@@ -54,29 +57,44 @@ class AICaller:
         }
 
         if self.model.startswith("vllm-"):
-            completion_params["stream"] = False
-            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
-            model_response = requests.post(f"{self.api_base}/chat/completions", headers=headers, json=completion_params).json()
-            return (
-                model_response["choices"][0]["message"]["content"],
-                int(model_response["usage"]["prompt_tokens"]),
-                int(model_response["usage"]["completion_tokens"]),
-            )
+            # completion_params["stream"] = False
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", 'Accept': 'text/event-stream'}
+            # model_response = requests.post(f"{self.api_base}/chat/completions", headers=headers, json=completion_params).json()
+            # print("Printing results from LLM model...")
+            # print(model_response["choices"][0]["message"]["content"])
+            # return (
+            #     model_response["choices"][0]["message"]["content"],
+            #     int(model_response["usage"]["prompt_tokens"]),
+            #     int(model_response["usage"]["completion_tokens"]),
+            # )
+            model_response = requests.post(f"{self.api_base}/chat/completions", headers=headers, stream=True, json=completion_params)
+            client = sseclient.SSEClient(model_response)
+            response = client.events()
+        else:
 
-        # API base exception for OpenAI Compatible, Ollama and Hugging Face models
-        if (
-            "ollama" in self.model
-            or "huggingface" in self.model
-            or self.model.startswith("openai/")
-        ):
-            completion_params["api_base"] = self.api_base
+            # API base exception for OpenAI Compatible, Ollama and Hugging Face models
+            if (
+                "ollama" in self.model
+                or "huggingface" in self.model
+                or self.model.startswith("openai/")
+            ):
+                completion_params["api_base"] = self.api_base
 
-        response = litellm.completion(**completion_params)
+            response = litellm.completion(**completion_params)
 
         chunks = []
         print("Streaming results from LLM model...")
         try:
             for chunk in response:
+                if isinstance(chunk, sseclient.Event):
+                    # print("data: ", chunk.data)
+                    if chunk.data == "[DONE]":
+                        break
+                    chunk_dict = json.loads(chunk.data)
+                    chunk = litellm.ModelResponse(**chunk_dict)
+
+                if isinstance(chunk.choices[0].delta, dict):
+                    chunk.choices[0].delta = Delta(**chunk.choices[0].delta)
                 print(chunk.choices[0].delta.content or "", end="", flush=True)
                 chunks.append(chunk)
                 time.sleep(
