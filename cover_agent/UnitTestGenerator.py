@@ -132,7 +132,7 @@ class UnitTestGenerator:
             command=self.test_command, cwd=self.test_command_dir
         )
         assert (
-            exit_code == 0
+            exit_code == 0 or exit_code == 5 # No tests were collected
         ), f'Fatal: Error running test command. Are you sure the command is correct? "{self.test_command}"\nExit code {exit_code}. \nStdout: \n{stdout} \nStderr: \n{stderr}'
 
         # Instantiate CoverageProcessor and process the coverage report
