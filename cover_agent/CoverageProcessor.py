@@ -106,7 +106,8 @@ class CoverageProcessor:
 
         for cls in root.findall(".//class"):
             name_attr = cls.get("filename")
-            if name_attr and name_attr.endswith(filename):
+            # if name_attr and name_attr.endswith(filename):
+            if name_attr == self.src_file_path:
                 for line in cls.findall(".//line"):
                     line_number = int(line.get("number"))
                     hits = int(line.get("hits"))
