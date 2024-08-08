@@ -73,7 +73,7 @@ class SingleTest(BaseModel):
 class NewTests(BaseModel):
     language: str = Field(description="The programming language of the source code")
     existing_test_function_signature: str = Field(description="A single line repeating a signature header of one of the existing test functions")
-    new_tests: List[SingleTest] = Field(min_items=1, max_items={{ max_tests }}, description="A list of new test functions to append to the existing test suite, aiming to increase the code coverage. Each test should run as-is, without requiring any additional inputs or setup code. Don't introduce new dependencies")
+    new_tests: List[SingleTest] = Field(min_items=1, max_items={{ max_tests }}, description="A list of new test functions to append to the existing test suite, aiming to increase the code coverage. The test should not match any of the tests in existing_test_function_signature. Each test should run as-is, without requiring any additional inputs or setup code. Don't introduce new dependencies")
 =====
 
 Example output:
@@ -95,7 +95,7 @@ new_tests:
 {%- endif %}
   test_code: |
 {%- if language in ["python"] %}
-    def ...
+    ...
 {%- else %}
     ...
 {%- endif %}
